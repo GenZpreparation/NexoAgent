@@ -1,0 +1,10 @@
+# Core Voice Pipeline Framework
+livekit-agents>=0.8.0
+livekit-plugins-silero>=0.6.0
+livekit-plugins-groq>=0.1.0
+livekit-plugins-deepgram>=0.6.0
+
+# Asynchronous utilities & environment
+aiohttp>=3.9.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
