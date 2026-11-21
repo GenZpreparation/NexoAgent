@@ -15,6 +15,7 @@ from app.core.database import get_db
 from app.models import Call, CallLog, Workspace, Lead, Campaign
 from app.services.campaign import campaign_engine
 from app.services.telephony import telephony_service
+from app.services.wallet import wallet_service
 from app.schemas.campaign import MetaLeadPayload
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
@@ -96,12 +97,15 @@ async def handle_telephony_webhook(
         if event.recording_url:
             call.recording_url = event.recording_url
 
-    # 2. If call completed and billed > 0, deduct from workspace balance
+    # 2. If call completed and billed > 0, deduct atomically using WalletService & record transaction
     if event.call_status == "completed" and cost > 0:
-        ws_res = await db.execute(select(Workspace).where(Workspace.id == call.workspace_id))
-        ws = ws_res.scalar_one_or_none()
-        if ws:
-            ws.balance_inr = round(ws.balance_inr - cost, 2)
+        await wallet_service.debit_balance(
+            workspace_id=call.workspace_id,
+            amount_inr=cost,
+            reference_id=call.call_sid,
+            description=f"Call deduction for {event.call_duration_seconds}s to {event.to_phone}",
+            db=db
+        )
 
     # 3. Smart Auto-Retry Hook: If call was busy or no-answer, check if lead needs retry scheduling
     retry_scheduled = False

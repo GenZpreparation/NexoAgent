@@ -423,4 +423,57 @@ Har entry me 3 cheezein hongi:
 
 ---
 
+## 📅 Financial Ledger Integrity & Cryptographic Payment Security (2026-11-21)
+
+### 1. Mathematical Double-Entry Ledger Principles:
+- Financial tables me direct mutation `balance = balance - cost` dangerous hota hai.
+- **Audit Columns:** Har deduction aur recharge par 3 values lock hoti hain:
+  - `opening_balance_inr`
+  - `amount_inr`
+  - `closing_balance_inr`
+  - Relationship: $\text{closing} = \text{opening} \pm \text{amount}$.
+- Isse client ka trust 100% rehta hai aur GST invoices me mathematical proof rehta hai.
+
+### 2. Razorpay HMAC SHA-256 Cryptographic Verification:
+- Frontend client par kabhi trust nahi kiya jata. Razorpay payment hone par client ko `razorpay_order_id`, `razorpay_payment_id`, aur `razorpay_signature` deta hai.
+- Backend server par:
+  $$\text{Expected Signature} = \text{HMAC-SHA256}(\text{Secret Key}, \text{order\_id} + "|" + \text{payment\_id})$$
+- Agar attacker signature tamper kare, to `hmac.compare_digest` false return karta hai aur transaction reject ho jata hai.
+- **Idempotency Guard:** Same payment ID agar do baar send ho, to duplicate balance credit hone se roka jata hai.
+
+### 3. Pre-Dial Overdraft Defense (HTTP 402 Payment Required):
+- SIP trunk calls real-time paise consume karti hain.
+- Call lagane se pehle **pre-flight check** lagta hai: Agar `balance < ₹10.00`, to call execute hi nahi hoti aur `HTTP 402` return hota hai, taaki telecom trunk par zero unrecoverable loss ho.
+
+---
+
+## 📅 Enterprise B2B Architecture: Developer Keys, Webhooks & Team RBAC (2026-11-21)
+
+### 1. Developer API Key Security (Never Store Raw Keys):
+- **Industry Standard (Stripe / GitHub Pattern):** Jab user API key create karta hai (`nexo_live_32bytes...`), to raw key sirf **ek baar** screen par dikhai deti hai.
+- **Database Storage:** Database me raw secret kabhi save nahi hota. Hum `hashlib.sha256(raw_key.encode()).hexdigest()` store karte hain aur identification ke liye first 16 characters (`prefix = nexo_live_a1b2...`) save karte hain.
+- **Verification Flow:** Incoming request me jab `X-API-Key` header aata hai, to backend usko SHA-256 hash karke database me query karta hai. Agar match milta hai aur `is_active=True`, to user authenticate ho jata hai aur `last_used_at` update ho jata hai.
+
+### 2. Dual-Authentication Resolver Pattern in FastAPI:
+- Enterprise SaaS platforms me do tarah ke clients aate hain:
+  1. **Humans:** Browser frontend (React/Next.js) jo short-lived JWT token use karta hai (`Authorization: Bearer <jwt>`).
+  2. **Automations & CRMs:** External systems (Salesforce, HubSpot, Zapier, Python scripts) jo static Developer API Keys use karte hain (`X-API-Key: nexo_live_...`).
+- **NexoAgent Implementation:** `deps.get_current_user` dependency automatically dono formats ko sniff karti hai bina route handlers ko change kiye.
+
+### 3. Outbound CRM Webhooks & HMAC-SHA256 Signatures:
+- Jab call complete hoti hai ya lead score update hota hai, to customer ke CRM (Webhook URL) par JSON payload push hota hai.
+- **Security Defense:** Webhook receiver ko kaise pata chale ki request NexoAgent se aayi hai na ki kisi hacker se?
+- **Signature Header:** Har HTTP request ke saath header bheja jata hai:
+  $$\text{X-Nexo-Signature} = \text{"sha256="} + \text{HMAC-SHA256}(\text{Subscription Secret}, \text{Payload JSON})$$
+- Webhook receiver constant time comparison (`hmac.compare_digest`) se verify karta hai.
+
+### 4. Role-Based Access Control (RBAC) & Self-Harm Guards:
+- **Roles:**
+  - `admin`: Full access (Billing recharge, API keys, member invites, agent deletion).
+  - `manager`: Campaign creation, lead ingestion, analytics viewing.
+  - `member`: Dialing calls, viewing assigned leads.
+- **Self-Harm Protection:** Kisi bhi Admin ko khud ka account deactive ya delete karne se code level par block kiya gaya hai taaki koi workspace "Orphan" na ho sake.
+
+---
+
 *(Naye din ke concepts roz aage date-wise add hote rahenge...)*

@@ -16,6 +16,7 @@ from app.schemas.campaign import (
     LeadResponse
 )
 from app.services.campaign import campaign_engine
+from app.services.wallet import wallet_service
 
 router = APIRouter(prefix="/campaigns", tags=["Bulk Campaigns"])
 
@@ -34,10 +35,16 @@ async def create_campaign(
             VoiceAgent.workspace_id == current_user.workspace_id
         )
     )
-    if not agent_res.scalar_one_or_none():
+    agent = agent_res.scalar_one_or_none()
+    if not agent:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Voice agent not found in your workspace"
+        )
+    if not agent.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Voice agent '{agent.name}' is currently paused/deactivated. Cannot bind to campaign."
         )
 
     campaign = Campaign(
@@ -140,6 +147,19 @@ async def start_campaign(
     campaign = result.scalar_one_or_none()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
+
+    # Pre-Dial Wallet Balance Enforcer
+    has_bal = await wallet_service.has_sufficient_balance(
+        workspace_id=current_user.workspace_id,
+        min_threshold_inr=10.0,
+        db=db
+    )
+    if not has_bal:
+        curr_bal = await wallet_service.get_balance(current_user.workspace_id, db)
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=f"Cannot start campaign. Insufficient wallet balance (₹{curr_bal}). Minimum ₹10.00 required. Please recharge your wallet."
+        )
 
     campaign.status = "running"
     await db.commit()

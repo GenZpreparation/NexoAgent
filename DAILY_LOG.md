@@ -466,4 +466,55 @@ Har din ki entry me:
 
 ---
 
+## 📅 Week 6: Prepaid Telecom Wallet, Razorpay Integration & ACID Ledger (2026-11-21)
+* **Goal:** Financial integrity ledger, Razorpay order generation and HMAC SHA-256 cryptographic verification, pre-dial balance enforcement, and client billing APIs.
+* **Accomplishments:**
+  - Designed and built immutable audit ledger model [`backend/app/models/wallet_transaction.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\app\models\wallet_transaction.py) (`WalletTransaction`).
+  - Developed atomic financial service [`backend/app/services/wallet.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\app\services\wallet.py) managing credits, debits, and balance threshold checks.
+  - Built Razorpay payment gateway service [`backend/app/services/razorpay_service.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\app\services\razorpay_service.py) with paise conversion and constant-time HMAC SHA-256 verification.
+  - Implemented complete Billing Router [`backend/app/api/v1/billing.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\app\api\v1\billing.py) (`/create-order`, `/verify-payment`, `/webhook`, `/wallet`, `/transactions`).
+  - Added single call dispatcher with pre-dial guard [`backend/app/api/v1/calls.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\app\api\v1\calls.py) (`POST /api/v1/calls/dispatch`).
+  - Enforced pre-dial balance guards across Single Outbound Calls and Bulk Campaigns (`HTTP 402 Payment Required` when balance < ₹10.0).
+  - Designed and executed 3 new automated test suites with 100% pass rate:
+    1. [`backend/test_wallet_ledger.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\test_wallet_ledger.py) (Audit ledger & tenant isolation).
+    2. [`backend/test_razorpay_billing.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\test_razorpay_billing.py) (Order creation, HMAC signature verification, tampered signature security defense, and idempotency).
+    3. [`backend/test_predial_enforcer.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\test_predial_enforcer.py) (Pre-dial block on low balance, instant unblock on recharge, end-to-end call billing).
+* **Status:** Week 6 Prepaid Telecom Wallet & Razorpay Billing 100% Live & Verified!
+
+---
+
+## 📅 Multi-Enterprise 3-Company HR Workflow & Control Simulation (2026-11-21)
+* **Goal:** Realistic simulation of 3 different enterprises (Zepto Logistics, HDFC Bank, and TCS Digital) with their HR heads onboarding, customizing prompts, pausing/resuming agents, screening candidates, and verifying 100% tenant isolation.
+* **Accomplishments:**
+  - Implemented 1-Click Agent Cloning / A-B Testing endpoint: [`backend/app/api/v1/agents.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\app\api\v1\agents.py) (`POST /api/v1/agents/{id}/duplicate`).
+  - Added Agent Active State Guard across calls and campaigns: Inactive/paused agents are strictly blocked from dialing (`HTTP 400 Bad Request`).
+  - Designed and executed comprehensive 7-phase simulation [`backend/test_multi_company_hr_workflow.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\test_multi_company_hr_workflow.py):
+    - Company 1 (Zepto Delivery): Agent created, prompt updated with joining bonus, agent duplicated for A/B shift testing, candidate screened, WhatsApp rider flyer dispatched.
+    - Company 2 (HDFC Banking): Agent created, hiring freeze triggered (paused agent), dialing blocked with 400, hiring freeze lifted (agent resumed), candidate screened.
+    - Company 3 (TCS Digital): Agent created, technical Python screening call dispatched, WhatsApp calendar interview invite sent.
+    - Verified strict multi-tenant IDOR attack protection (Zepto cannot view, edit, or delete HDFC/TCS agents or candidates).
+    - Verified independent telecom wallet balances (Zepto ₹489.0, HDFC ₹489.0, TCS ₹483.5).
+* **Status:** 3-Enterprise HR Complete Workflow 100% Verified & Passing!
+
+---
+
+## 📅 Enterprise B2B SaaS Features: API Keys, CRM Webhooks & Team RBAC (2026-11-21)
+* **Goal:** Complete all missing enterprise B2B SaaS capabilities to make NexoAgent a fully autonomous, developer-friendly, and multi-user platform.
+* **Accomplishments:**
+  - Designed & implemented Developer API Key system:
+    - Model [`backend/app/models/api_key.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/backend/app/models/api_key.py) with SHA-256 hashing and visible key prefixes (`nexo_live_...`).
+    - API router [`backend/app/api/v1/api_keys.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/backend/app/api/v1/api_keys.py) for key generation, listing (masked secrets), and revocation.
+    - Updated [`backend/app/core/deps.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/backend/app/core/deps.py) with dual-authentication resolver supporting both Bearer JWT and `X-API-Key` headers with real-time `last_used_at` telemetry.
+  - Implemented Outbound CRM Webhooks:
+    - Model [`backend/app/models/webhook_subscription.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/backend/app/models/webhook_subscription.py) with HMAC-SHA256 secret keys.
+    - Router [`backend/app/api/v1/integrations.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/backend/app/api/v1/integrations.py) supporting webhook subscription registration, listing, deletion, and test-ping with cryptographic signature headers (`X-Nexo-Signature: sha256=...`).
+  - Implemented Workspace Team Members & Role-Based Access Control (RBAC):
+    - Router [`backend/app/api/v1/workspace.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/backend/app/api/v1/workspace.py) for workspace profile, inviting teammates (`/workspace/members`), listing members, updating roles, and deactivation.
+    - Enforced security guards: Only Admins can invite/manage members and generate API keys; members are blocked (`HTTP 403 Forbidden`); Admins are protected against accidental self-deactivation.
+  - Developed and verified dedicated test suite [`backend/test_enterprise_saas_features.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/backend/test_enterprise_saas_features.py) with 100% pass rate.
+  - Verified zero regressions across entire backend suite (`test_real_world_simulation.py` and `test_multi_company_hr_workflow.py`).
+* **Status:** Backend Enterprise B2B SaaS Layer 100% Complete & Production-Ready!
+
+---
+
 *(Har working session ke baad yahan quick 4-line log update hota rahega...)*

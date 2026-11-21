@@ -11,6 +11,10 @@ from app.api.v1.agents import router as agents_router
 from app.api.v1.calls import router as calls_router
 from app.api.v1.whatsapp import router as whatsapp_router
 from app.api.v1.campaigns import router as campaigns_router
+from app.api.v1.billing import router as billing_router
+from app.api.v1.api_keys import router as api_keys_router
+from app.api.v1.integrations import router as integrations_router
+from app.api.v1.workspace import router as workspace_router
 
 
 @asynccontextmanager
@@ -36,6 +40,10 @@ app.include_router(agents_router, prefix="/api/v1")
 app.include_router(calls_router, prefix="/api/v1")
 app.include_router(campaigns_router, prefix="/api/v1")
 app.include_router(whatsapp_router, prefix="/api/v1")
+app.include_router(billing_router, prefix="/api/v1")
+app.include_router(api_keys_router, prefix="/api/v1")
+app.include_router(integrations_router, prefix="/api/v1")
+app.include_router(workspace_router, prefix="/api/v1")
 app.include_router(webhooks_router, prefix="/api/v1")
 
 @app.get("/")

@@ -40,3 +40,17 @@ class CallResponse(BaseModel):
 class CallListResponse(BaseModel):
     total: int
     items: List[CallResponse]
+
+
+class CallDispatchRequest(BaseModel):
+    phone_number: str
+    agent_id: int
+
+
+class CallDispatchResponse(BaseModel):
+    status: str = "dispatched"
+    call_sid: str
+    customer_phone: str
+    agent_id: int
+    workspace_id: int
+

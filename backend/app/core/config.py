@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     WHATSAPP_BUSINESS_ACCOUNT_ID: str | None = None
     DEFAULT_BROCHURE_PDF_URL: str = "https://storage.nexoagent.com/brochures/nexo_grandeur_brochure.pdf"
 
+    # Razorpay Payment Gateway
+    RAZORPAY_KEY_ID: str = "rzp_test_nexoagent_key_2026"
+    RAZORPAY_KEY_SECRET: str = "nexoagent_razorpay_secret_key_2026"
+    RAZORPAY_WEBHOOK_SECRET: str = "nexoagent_rzp_webhook_secret_2026"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

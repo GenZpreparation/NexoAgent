@@ -135,3 +135,44 @@ async def delete_voice_agent(
     await db.delete(agent)
     await db.commit()
     return None
+
+
+@router.post("/{agent_id}/duplicate", response_model=AgentResponse, status_code=status.HTTP_201_CREATED)
+async def duplicate_voice_agent(
+    agent_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    1-Click Agent Cloning / A-B Testing:
+    Duplicates an existing agent with a new '(Copy)' name in the same workspace.
+    """
+    result = await db.execute(
+        select(VoiceAgent).where(
+            VoiceAgent.id == agent_id,
+            VoiceAgent.workspace_id == current_user.workspace_id
+        )
+    )
+    agent = result.scalar_one_or_none()
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Voice agent with ID {agent_id} not found in your workspace"
+        )
+
+    cloned_agent = VoiceAgent(
+        workspace_id=current_user.workspace_id,
+        name=f"{agent.name} (Copy)",
+        system_prompt=agent.system_prompt,
+        first_message=agent.first_message,
+        voice_provider=agent.voice_provider,
+        voice_id=agent.voice_id,
+        language=agent.language,
+        temperature=agent.temperature,
+        is_active=True
+    )
+    db.add(cloned_agent)
+    await db.commit()
+    await db.refresh(cloned_agent)
+    return cloned_agent
+
