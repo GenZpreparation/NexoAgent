@@ -197,5 +197,94 @@ class CampaignEngine:
             "dispatched_leads": dispatched
         }
 
+    def schedule_lead_retry(self, lead: Lead, call_status: str) -> bool:
+        """
+        Calculates smart retry interval when a call ends in busy or no-answer.
+        Retry Backoff intervals:
+        - 1st Retry: +30 minutes
+        - 2nd Retry: +2 hours
+        - 3rd Retry: +24 hours
+        If max retries reached, marks lead as exhausted.
+        """
+        if call_status not in ["busy", "no-answer", "failed"]:
+            return False
+
+        if lead.retry_count >= lead.max_retries:
+            lead.status = "exhausted"
+            lead.next_retry_at = None
+            return False
+
+        # Calculate backoff delay
+        now_utc = datetime.now(timezone.utc)
+        if lead.retry_count == 1:
+            delay = timedelta(minutes=30)
+        elif lead.retry_count == 2:
+            delay = timedelta(hours=2)
+        else:
+            delay = timedelta(hours=24)
+
+        lead.next_retry_at = now_utc + delay
+        lead.status = "retry_scheduled"
+        return True
+
+    async def dispatch_due_retries(
+        self,
+        campaign_id: int,
+        workspace_id: int,
+        db: AsyncSession
+    ) -> Dict[str, Any]:
+        """
+        Pulls scheduled retry leads that have matured (now >= next_retry_at)
+        and initiates new outbound calls respecting TRAI hours and limits.
+        """
+        if not self.is_within_trai_calling_hours():
+            return {
+                "dispatched": 0,
+                "status": "trai_window_closed",
+                "message": "TRAI regulations restrict calling between 7:00 PM and 10:00 AM IST"
+            }
+
+        camp_res = await db.execute(
+            select(Campaign).where(
+                Campaign.id == campaign_id,
+                Campaign.workspace_id == workspace_id
+            )
+        )
+        campaign = camp_res.scalar_one_or_none()
+        if not campaign or campaign.status not in ["running", "draft"]:
+            return {"dispatched": 0, "status": "campaign_not_active"}
+
+        now_utc = datetime.now(timezone.utc)
+        retries_res = await db.execute(
+            select(Lead).where(
+                Lead.campaign_id == campaign_id,
+                Lead.workspace_id == workspace_id,
+                Lead.status == "retry_scheduled",
+                Lead.next_retry_at <= now_utc
+            ).limit(campaign.concurrency_limit)
+        )
+        due_leads = retries_res.scalars().all()
+
+        dispatched = []
+        for lead in due_leads:
+            call_result = telephony_service.initiate_outbound_call(lead.phone_number)
+            lead.status = "dialing"
+            lead.call_sid = call_result.get("call_id")
+            lead.last_called_at = now_utc
+            lead.retry_count += 1
+            campaign.dialed_leads += 1
+            dispatched.append({
+                "lead_id": lead.id,
+                "phone": lead.phone_number,
+                "call_sid": lead.call_sid,
+                "attempt_number": lead.retry_count
+            })
+
+        await db.commit()
+        return {
+            "dispatched_count": len(dispatched),
+            "dispatched_retries": dispatched
+        }
+
 
 campaign_engine = CampaignEngine()

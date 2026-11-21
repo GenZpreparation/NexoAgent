@@ -177,3 +177,25 @@ async def list_campaign_leads(
     query = query.order_by(Lead.id.asc()).limit(limit).offset(offset)
     res = await db.execute(query)
     return res.scalars().all()
+
+
+@router.post("/{campaign_id}/dispatch-retries")
+async def dispatch_campaign_retries(
+    campaign_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Campaign ke due retry leads (status=retry_scheduled, now >= next_retry_at)
+    ko auto-dial karta hai respecting TRAI calling hours.
+    """
+    res = await campaign_engine.dispatch_due_retries(
+        campaign_id=campaign_id,
+        workspace_id=current_user.workspace_id,
+        db=db
+    )
+    return {
+        "campaign_id": campaign_id,
+        **res
+    }
+

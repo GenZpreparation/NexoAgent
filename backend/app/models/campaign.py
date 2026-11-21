@@ -41,12 +41,14 @@ class Lead(Base, TimestampMixin):
     custom_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, default=dict)
     
     # Lead Lifecycle Status:
-    # pending, dialing, completed, busy, no-answer, dnd_blocked, failed
+    # pending, dialing, completed, busy, no-answer, dnd_blocked, failed, retry_scheduled, exhausted
     status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
     retry_count: Mapped[int] = mapped_column(Integer, default=0)
     max_retries: Mapped[int] = mapped_column(Integer, default=3)
     call_sid: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
     last_called_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_retry_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    lead_source: Mapped[str] = mapped_column(String(50), default="csv_upload", index=True)
 
     # Relationship
     campaign = relationship("Campaign", back_populates="leads")

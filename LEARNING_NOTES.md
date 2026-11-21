@@ -403,4 +403,24 @@ Har entry me 3 cheezein hongi:
 
 ---
 
+## 📅 Speed-to-Lead Engineering & Smart Auto-Retry Logic (2026-11-21)
+
+### 1. The "Speed-to-Lead" Law in Inside Sales:
+- Harvard Business Review study ke mutabiq, agar kisi inbound form lead ko **5 minute ke andar** call lagayi jaye, to conversion probability **21x higher** hoti hai compared to 30 minutes.
+- **NexoAgent Architecture:** Facebook Lead form submit hote hi Meta Webhook hit hota hai. Hamara FastAPI backend bina human intervention ke **sub-30 seconds** me LiveKit + SIP outbound dial trigger karta hai.
+
+### 2. Meta Webhook Handshake Protocol:
+- **`hub.challenge` Verification:** Meta jab naya webhook verify karta hai, to ek unique `hub.verify_token` aur `hub.challenge` bhejta hai. Server ko authentication confirm karke plain-text me wahi `hub.challenge` wapas return karna hota hai.
+
+### 3. Stepped Backoff for Unanswered Calls:
+- Agar customer ne pehli call nahi uthayi ya phone busy aaya:
+  - Ek hi baar me 10 calls lagana illegal harassment aur spam hota hai.
+  - **NexoAgent Smart Schedule:**
+    - Attempt 1: +30 minutes
+    - Attempt 2: +2 hours
+    - Attempt 3: +24 hours (10:00 AM next day within TRAI window)
+  - 3 attempts ke baad lead ko `exhausted` mark kar diya jata hai taaki telecom trunk choke na ho.
+
+---
+
 *(Naye din ke concepts roz aage date-wise add hote rahenge...)*

@@ -450,4 +450,20 @@ Har din ki entry me:
 
 ---
 
+## 📅 Day 19: Speed-to-Lead Meta Ads Webhook & Auto-Retry Scheduler (2026-11-21)
+* **Goal:** Sub-30s instant outbound AI dialout for Facebook/Instagram Lead Ads + Intelligent multi-tier auto-retry engine for busy/unanswered calls.
+* **Accomplishments:**
+  - Upgraded [`backend/app/models/campaign.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\app\models\campaign.py) `Lead` model with `next_retry_at` and `lead_source` attributes.
+  - Built Meta Webhook verification handshake (`GET /api/v1/webhooks/meta-leads`) honoring Meta's `hub.challenge` protocol.
+  - Implemented Speed-to-Lead Ingestion (`POST /api/v1/webhooks/meta-leads`) with E.164 phone sanitization, DND scrubbing, TRAI calling window enforcer, and sub-30s instant outbound dialing.
+  - Built intelligent auto-retry engine in [`backend/app/services/campaign.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\app\services\campaign.py) (`schedule_lead_retry`, `dispatch_due_retries`):
+    - Backoff delays: Attempt 1 (+30m), Attempt 2 (+2h), Attempt 3 (+24h).
+    - Auto-exhaustion when `retry_count >= max_retries`.
+  - Connected Telephony webhook (`POST /webhooks/telephony`) to automatically detect `busy`, `no-answer`, and `failed` events and schedule lead retries.
+  - Added retry dispatch endpoint (`POST /api/v1/campaigns/{campaign_id}/dispatch-retries`).
+  - Created and executed test suite [`backend/test_speed_to_lead_and_retries.py`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ\Krishna\NexoAgent\backend\test_speed_to_lead_and_retries.py) covering all 6 core scenarios with 100% pass rate.
+* **Status:** Day 19 Speed-to-Lead & Auto-Retry Scheduler 100% Live & Verified!
+
+---
+
 *(Har working session ke baad yahan quick 4-line log update hota rahega...)*

@@ -52,6 +52,20 @@ class LeadResponse(BaseModel):
     max_retries: int
     call_sid: Optional[str]
     last_called_at: Optional[datetime]
+    next_retry_at: Optional[datetime] = None
+    lead_source: str = "csv_upload"
 
     class Config:
         from_attributes = True
+
+
+class MetaLeadPayload(BaseModel):
+    full_name: str = Field(default="Prospect", example="Rohit Sharma")
+    phone_number: str = Field(..., example="+919876543210")
+    city: Optional[str] = Field(default=None, example="Noida")
+    workspace_id: int = Field(default=1, example=1)
+    agent_id: Optional[int] = Field(default=None, example=1)
+    campaign_id: Optional[int] = Field(default=None, example=1)
+    auto_dial: bool = Field(default=True, description="Whether to dial lead in < 30 seconds")
+    custom_data: Optional[Dict[str, Any]] = Field(default_factory=dict, example={"ad_name": "DLF Luxury 3BHK", "budget": "2 Cr"})
+
