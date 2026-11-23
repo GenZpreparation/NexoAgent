@@ -17,6 +17,8 @@ Yahan tumhe backend ke saare APIs ke contracts, exact JSON payloads, ready-made 
 
 | File | Purpose | Description |
 | :--- | :--- | :--- |
+| **[`DAY_BY_DAY_UI_BLUEPRINT.md`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/frontend/DAY_BY_DAY_UI_BLUEPRINT.md)** | **Day-by-Day UI & Feature Blueprint** | Roz ka exact visual layout, components, buttons, user actions, and acceptance criteria. |
+| **[`TEAMMATE_COMMANDS_GUIDE.md`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/frontend/TEAMMATE_COMMANDS_GUIDE.md)** | **Daily Developer Commands** | Day 1 setup commands, daily morning/coding/evening git workflow, backend startup guide. |
 | **[`docs/API_CONTRACTS.md`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/frontend/docs/API_CONTRACTS.md)** | **Backend API Specification** | Saare 20+ FastAPI endpoints, Request/Response JSON schemas, Auth Headers, Error Codes. |
 | **[`docs/ANTI_AI_DESIGN_GUIDELINES.md`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/frontend/docs/ANTI_AI_DESIGN_GUIDELINES.md)** | **Signature "Anti-AI-Slop" Guide** | Rules to ensure website NEVER looks like a generic AI template (Linear + Raycast aesthetic). |
 | **[`docs/DESIGN_SYSTEM_RULES.md`](file:///d:/python%20Qspider/Notes/PYTHON/GenZ/Krishna/NexoAgent/frontend/docs/DESIGN_SYSTEM_RULES.md)** | **Design System & UI Rules** | Master color system, dark theme hierarchy, typography, border radius, component rules. |
