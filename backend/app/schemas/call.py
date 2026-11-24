@@ -45,12 +45,14 @@ class CallListResponse(BaseModel):
 class CallDispatchRequest(BaseModel):
     phone_number: str
     agent_id: int
+    dry_run: bool = False
 
 
 class CallDispatchResponse(BaseModel):
     status: str = "dispatched"
-    call_sid: str
+    call_sid: Optional[str] = None
     customer_phone: str
     agent_id: int
     workspace_id: int
+    message: Optional[str] = None
 

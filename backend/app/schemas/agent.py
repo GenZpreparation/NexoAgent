@@ -44,3 +44,17 @@ class AgentResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class AgentKnowledgeRequest(BaseModel):
+    knowledge_type: str = Field(default="text", description="Type of knowledge: text, faq, or document")
+    content: str = Field(..., min_length=5, description="Factual knowledge, rules, or FAQs")
+    source_name: Optional[str] = Field(default="Manual Entry", description="Title or source of this knowledge")
+
+
+class AgentKnowledgeResponse(BaseModel):
+    agent_id: int
+    status: str = "ingested"
+    source_name: str
+    appended_characters: int
+    updated_system_prompt_length: int

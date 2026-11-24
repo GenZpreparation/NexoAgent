@@ -476,4 +476,23 @@ Har entry me 3 cheezein hongi:
 
 ---
 
+## 📅 Outpero Reverse-Engineering: Idempotency, DLT Channels & Telemetry (2026-11-24)
+
+### 1. Idempotency-Key on Telecom Writes:
+- **The Problem:** Jab external CRM (Zapier, n8n, Salesforce) call lagane ke liye `POST /calls` hit karta hai aur network me timeout ho jata hai, to client request ko re-try karta hai. Bina idempotency guard ke customer ko **do-do calls** lag jayengi aur wallet double debit ho jayega.
+- **The Solution:** Client request header me `Idempotency-Key: req_xyz123` bhejta hai. Server pehle check karta hai ki is key ke sath call already queue ho chuki hai ya nahi. Agar ho chuki hai, to cached call SID return hota hai bina dobara dial kiye.
+
+### 2. Dedicated Channels & Concurrency Allocation (₹649/Channel):
+- Indian telecom me DLT-registered 10-digit caller IDs (`+91 80...`) PRI line par chalte hain.
+- Har number me default 1 simultaneous call ki capacity hoti hai. Outpero aur NexoAgent me concurrency ko **Channels** me becha jata hai (e.g. 5 channels = 5 simultaneous calls).
+- `GET /channels/live` endpoint real-time me calculate karta hai:
+  $$\text{Burn Rate (₹/min)} = \text{Active Calls} \times ₹5.50$$
+  Isse top bar me live ticker `• 2 on calls · 11.0/min` render hota hai.
+
+### 3. CRM View Switcher & Fast CSV Streaming:
+- Leads page par 4 views hote hain: Pipeline (Kanban), List, Cards, aur Priority.
+- Export karte waqt in-memory CSV generation (`io.StringIO` + `csv.writer`) memory efficient hota hai aur pure dataset ko `text/csv` stream ke roop me client ko download kara deta hai.
+
+---
+
 *(Naye din ke concepts roz aage date-wise add hote rahenge...)*

@@ -9,7 +9,7 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models import User, VoiceAgent
-from app.schemas.agent import AgentCreateRequest, AgentUpdateRequest, AgentResponse
+from app.schemas.agent import AgentCreateRequest, AgentUpdateRequest, AgentResponse, AgentKnowledgeRequest, AgentKnowledgeResponse
 
 router = APIRouter(prefix="/agents", tags=["Voice Agent Studio"])
 
@@ -175,4 +175,41 @@ async def duplicate_voice_agent(
     await db.commit()
     await db.refresh(cloned_agent)
     return cloned_agent
+
+
+@router.post("/{agent_id}/knowledge", response_model=AgentKnowledgeResponse, status_code=status.HTTP_200_OK)
+async def ingest_agent_knowledge(
+    agent_id: int,
+    payload: AgentKnowledgeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Agent ke context me company FAQs, rules ya facts ingest karta hai (Outpero Training Tab equivalent).
+    """
+    res = await db.execute(
+        select(VoiceAgent).where(
+            VoiceAgent.id == agent_id,
+            VoiceAgent.workspace_id == current_user.workspace_id
+        )
+    )
+    agent = res.scalar_one_or_none()
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Voice agent with ID {agent_id} not found in your workspace"
+        )
+
+    knowledge_block = f"\n\n### [KNOWLEDGE BASE: {payload.source_name}]\n{payload.content.strip()}\n"
+    agent.system_prompt += knowledge_block
+    await db.commit()
+    await db.refresh(agent)
+
+    return AgentKnowledgeResponse(
+        agent_id=agent.id,
+        status="ingested",
+        source_name=payload.source_name or "Manual Entry",
+        appended_characters=len(knowledge_block),
+        updated_system_prompt_length=len(agent.system_prompt)
+    )
 

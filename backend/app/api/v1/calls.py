@@ -3,7 +3,7 @@ NexoAgent - Call Ledger & Call History Router
 Provides paginated call logs, recording URLs, billing breakdowns, and AI analytics.
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, Body, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Body, Header, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
@@ -18,6 +18,9 @@ from app.services.telephony import telephony_service
 from app.services.campaign import campaign_engine
 
 router = APIRouter(prefix="/calls", tags=["Call Ledger & Analytics"])
+
+# In-memory idempotency cache: { "workspace_id:idempotency_key": { ...response_data } }
+_idempotency_store: dict = {}
 
 
 @router.get("", response_model=CallListResponse)
@@ -184,16 +187,34 @@ async def get_call_recording_stream(
     }
 
 
+@router.post("", response_model=CallDispatchResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/dispatch", response_model=CallDispatchResponse, status_code=status.HTTP_201_CREATED)
 async def dispatch_single_call(
     payload: CallDispatchRequest,
+    idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Direct Single Outbound Call Dispatcher with Pre-Dial Balance Guard.
-    Checks wallet balance >= ₹10.00 before dialing carrier SIP trunk.
+    Direct Outbound Call Dispatcher matching Outpero's POST /v1/calls specification.
+    Includes Idempotency-Key on writes (prevents duplicate dialing on retries),
+    dry_run support (checks balance, agent and DND without placing live call),
+    and enforces pre-dial wallet balance threshold (₹10.00).
     """
+    # 0. Outpero Idempotency-Key Guard
+    if idempotency_key:
+        store_key = f"{current_user.workspace_id}:{idempotency_key.strip()}"
+        if store_key in _idempotency_store:
+            cached = _idempotency_store[store_key]
+            return CallDispatchResponse(
+                status="dispatched",
+                call_sid=cached["call_sid"],
+                customer_phone=cached["customer_phone"],
+                agent_id=cached["agent_id"],
+                workspace_id=cached["workspace_id"],
+                message="Idempotent response: call already queued previously with this Idempotency-Key."
+            )
+
     # 1. Pre-Dial Wallet Balance Enforcer
     has_bal = await wallet_service.has_sufficient_balance(
         workspace_id=current_user.workspace_id,
@@ -240,11 +261,22 @@ async def dispatch_single_call(
             detail="Phone number is registered on TRAI DND registry. Telemarketing dialing prohibited."
         )
 
-    # 4. Dial outbound call via carrier
+    # 4. Outpero Dry-Run Support (Verifies checks without dialing)
+    if payload.dry_run:
+        return CallDispatchResponse(
+            status="dry_run_passed",
+            call_sid="dry_run_simulated",
+            customer_phone=clean_phone,
+            agent_id=agent.id,
+            workspace_id=current_user.workspace_id,
+            message="Dry-run verification passed: wallet balance, agent status, and TRAI DND checks valid. Dials nobody."
+        )
+
+    # 5. Dial outbound call via carrier
     call_res = telephony_service.initiate_outbound_call(clean_phone)
     call_sid = call_res.get("call_id")
 
-    # 5. Persist initial Call row
+    # 6. Persist initial Call row
     call = Call(
         call_sid=call_sid,
         workspace_id=current_user.workspace_id,
@@ -268,6 +300,15 @@ async def dispatch_single_call(
     )
     db.add(call_log)
     await db.commit()
+
+    if idempotency_key:
+        store_key = f"{current_user.workspace_id}:{idempotency_key.strip()}"
+        _idempotency_store[store_key] = {
+            "call_sid": call_sid,
+            "customer_phone": clean_phone,
+            "agent_id": agent.id,
+            "workspace_id": current_user.workspace_id
+        }
 
     return CallDispatchResponse(
         status="dispatched",

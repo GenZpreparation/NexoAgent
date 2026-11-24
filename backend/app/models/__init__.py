@@ -11,6 +11,7 @@ from app.models.campaign import Campaign, Lead
 from app.models.wallet_transaction import WalletTransaction
 from app.models.api_key import ApiKey
 from app.models.webhook_subscription import WebhookSubscription
+from app.models.channel import Channel
 
 __all__ = [
     "Base",
@@ -23,5 +24,6 @@ __all__ = [
     "Lead",
     "WalletTransaction",
     "ApiKey",
-    "WebhookSubscription"
+    "WebhookSubscription",
+    "Channel"
 ]

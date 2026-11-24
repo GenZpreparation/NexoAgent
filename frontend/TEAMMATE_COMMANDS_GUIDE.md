@@ -187,12 +187,9 @@ Frontend banate waqt in files ko apna guide banao:
 
 | Document | Path | Kyu Dekhna Hai? |
 |---|---|---|
-| **Day-by-Day UI Blueprint** | [`DAY_BY_DAY_UI_BLUEPRINT.md`](DAY_BY_DAY_UI_BLUEPRINT.md) | **Must Follow:** Roz ka exact page layout, features, components, aur acceptance criteria. |
-| **Design Directive** | [`../GEMINI.md`](../GEMINI.md) | Nexo Obsidian color palette, typography, anti-AI-slop rules. |
-| **4-Week Roadmap** | [`docs/ROADMAP_4_WEEKS.md`](docs/ROADMAP_4_WEEKS.md) | Kaunse din kaunsa page aur component banana hai. |
-| **API Contracts** | [`docs/API_CONTRACTS.md`](docs/API_CONTRACTS.md) | Backend ke sabhi 20+ endpoints ke request/response schemas. |
-| **TypeScript Types** | [`src/types/api.ts`](src/types/api.ts) | Ready-made interfaces (Agent, Call, Campaign, Wallet). |
-| **Wireframes** | [`docs/SCREEN_WIREFRAMES.md`](docs/SCREEN_WIREFRAMES.md) | Har page ka visual layout aur ASCII wireframes. |
+| **Outpero Exact Blueprint** | [`OUTPERO_EXACT_FRONTEND_BLUEPRINT.md`](OUTPERO_EXACT_FRONTEND_BLUEPRINT.md) | **Must Follow:** Exact Outpero theme, layout, sidebar, pages, aur 3-week day-by-day plan. |
+| **API Contracts** | [`docs/API_CONTRACTS.md`](docs/API_CONTRACTS.md) | Backend ke sabhi FastAPI endpoints ke request/response schemas. |
+| **TypeScript Types** | [`src/types/api.ts`](src/types/api.ts) | Ready-made interfaces (Agent, Call, Lead, Campaign, Wallet). |
 
 ---
 
