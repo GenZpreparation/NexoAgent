@@ -1,23 +1,28 @@
 /**
- * NexoAgent - TypeScript API Contract Types
- * 100% synchronized with Python FastAPI Backend Pydantic Schemas.
- * Any frontend developer can directly import and consume these interfaces.
+ * NexoAgent — backend WIRE types.
+ *
+ * These mirror the FastAPI response/request models exactly as implemented in
+ * `backend/app/schemas/*` and the inline models in `backend/app/api/v1/*`.
+ * Verified against the backend source on 2026-11-27.
+ *
+ * Rules:
+ *  - Only the services layer (`src/services/*`) and adapters may import these.
+ *  - UI components consume DOMAIN types from `src/types/domain.ts` instead.
+ *  - If the backend changes a schema, update it here and fix the adapter;
+ *    the UI should not need to change.
  */
 
-// ---------------------------------------------------------------------------
-// 1. Auth & Multi-Tenancy Types
-// ---------------------------------------------------------------------------
-
-export interface User {
+// ---------------------------------------------------------------- Auth ----
+export interface ApiUser {
   id: number;
   email: string;
   full_name: string;
-  role: "admin" | "agent" | "viewer";
+  role: string; // backend roles: "admin" | "manager" | "member"
   workspace_id: number;
   is_active: boolean;
 }
 
-export interface Workspace {
+export interface ApiWorkspace {
   id: number;
   name: string;
   slug: string;
@@ -25,148 +30,118 @@ export interface Workspace {
   is_active: boolean;
 }
 
-export interface TokenResponse {
+export interface ApiTokenResponse {
   access_token: string;
-  token_type: "bearer";
-  user: User;
-  workspace: Workspace;
+  token_type: string;
+  user: ApiUser;
+  workspace: ApiWorkspace;
 }
 
-export interface UserRegisterRequest {
+export interface ApiLoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface ApiRegisterRequest {
   company_name: string;
   full_name: string;
   email: string;
   password: string;
 }
 
-export interface UserLoginRequest {
-  email: string;
-  password: string;
+/** GET /auth/me */
+export interface ApiMeResponse {
+  user: ApiUser;
+  workspace: ApiWorkspace;
 }
 
-// ---------------------------------------------------------------------------
-// 2. Voice Agent Studio Types
-// ---------------------------------------------------------------------------
-
-export interface VoiceAgent {
+// -------------------------------------------------------------- Agents ----
+export interface ApiAgent {
   id: number;
   workspace_id: number;
   name: string;
   system_prompt: string;
   first_message: string;
-  voice_provider: "sarvam" | "deepgram" | "elevenlabs";
-  voice_id: string; // e.g. "bulbul:v3/pooja"
-  language: string; // e.g. "hi-IN"
-  temperature: number; // 0.0 - 1.0
+  voice_provider: string;
+  voice_id: string;
+  language: string;
+  temperature: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export interface AgentCreateRequest {
+export interface ApiAgentCreateRequest {
+  name: string; // 2..100
+  system_prompt: string; // min 10
+  first_message: string; // 5..500
+  voice_provider?: string;
+  voice_id?: string;
+  language?: string;
+  temperature?: number; // 0..1
+}
+
+export type ApiAgentUpdateRequest = Partial<ApiAgentCreateRequest> & { is_active?: boolean };
+
+// -------------------------------------------------------------- Voices ----
+export interface ApiVoice {
+  id: string;
   name: string;
-  system_prompt: string;
-  first_message: string;
-  voice_provider?: string;
-  voice_id?: string;
-  language?: string;
-  temperature?: number;
+  language: string;
+  language_code: string;
+  provider: string;
+  gender: string;
+  accent: string;
+  tier: string;
+  rate_per_min_inr: number;
+  description: string;
+  sample_audio_url: string;
 }
 
-export interface AgentUpdateRequest {
-  name?: string;
-  system_prompt?: string;
-  first_message?: string;
-  voice_provider?: string;
-  voice_id?: string;
-  language?: string;
-  temperature?: number;
-  is_active?: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// 3. Call Ledger & Post-Call AI Intelligence Types
-// ---------------------------------------------------------------------------
-
-export type CallStatus =
-  | "initiated"
-  | "ringing"
-  | "in-progress"
-  | "completed"
-  | "busy"
-  | "no-answer"
-  | "failed";
-
-export type SentimentType = "Positive" | "Neutral" | "Negative" | "Busy";
-export type LeadScore = "Hot" | "Warm" | "Cold";
-
-export interface ExtractedVariables {
-  budget?: string | null;
-  bhk?: string | null;
-  preferred_location?: string | null;
-  visit_date?: string | null;
-  lead_interest?: LeadScore;
-  action_items?: string[];
-  [key: string]: any;
-}
-
-export interface CallLog {
+// --------------------------------------------------------------- Calls ----
+export interface ApiCallLog {
   id: number;
   transcript: string | null;
   summary: string | null;
-  sentiment: SentimentType | null;
-  extracted_data: ExtractedVariables | null;
-  whatsapp_status: "none" | "queued" | "sent" | "failed";
+  sentiment: string | null;
+  extracted_data: Record<string, unknown> | null;
+  whatsapp_status: string;
 }
 
-export interface Call {
+export interface ApiCall {
   id: number;
   call_sid: string;
   workspace_id: number;
   agent_id: number | null;
   customer_phone: string;
-  direction: "outbound" | "inbound";
-  status: CallStatus;
+  direction: string; // "outbound" | "inbound"
+  status: string; // initiated, ringing, in-progress, completed, busy, no-answer, failed
   duration_seconds: number;
   cost_inr: number;
   recording_url: string | null;
   created_at: string;
-  log?: CallLog | null;
+  log: ApiCallLog | null;
 }
 
-export interface CallListResponse {
+export interface ApiCallList {
   total: number;
-  items: Call[];
+  items: ApiCall[];
 }
 
-export interface RecordingStreamResponse {
+export interface ApiRecordingStream {
   call_id: number;
   call_sid: string;
   streaming_url: string;
   expires_in_seconds: number;
 }
 
-// ---------------------------------------------------------------------------
-// 4. Bulk Outbound Campaign Types
-// ---------------------------------------------------------------------------
-
-export type CampaignStatus = "draft" | "running" | "paused" | "completed";
-
-export type LeadStatus =
-  | "pending"
-  | "dialing"
-  | "completed"
-  | "busy"
-  | "no-answer"
-  | "dnd_blocked"
-  | "failed";
-
-export interface Campaign {
+// ----------------------------------------------------------- Campaigns ----
+export interface ApiCampaign {
   id: number;
   workspace_id: number;
   agent_id: number;
   name: string;
-  status: CampaignStatus;
+  status: string; // draft, running, paused, completed
   concurrency_limit: number;
   total_leads: number;
   dialed_leads: number;
@@ -174,59 +149,213 @@ export interface Campaign {
   created_at: string;
 }
 
-export interface CampaignCreateRequest {
+export interface ApiCampaignCreateRequest {
   name: string;
   agent_id: number;
-  concurrency_limit?: number;
+  concurrency_limit?: number; // 1..50
 }
 
-export interface Lead {
+export interface ApiCampaignLead {
   id: number;
   campaign_id: number;
   workspace_id: number;
   full_name: string;
   phone_number: string;
   city: string | null;
-  status: LeadStatus;
+  status: string;
   retry_count: number;
   max_retries: number;
   call_sid: string | null;
   last_called_at: string | null;
+  next_retry_at: string | null;
+  lead_source: string;
 }
 
-export interface CsvUploadStats {
-  status: "success" | "failed";
+/** POST /campaigns/{id}/upload-csv — shape per backend docs (dict response). */
+export interface ApiCsvUploadResult {
+  status: string;
   campaign_id: number;
-  total_rows_processed: number;
-  leads_added: number;
-  dnd_scrubbed_blocked: number;
-  duplicates_skipped: number;
-  invalid_numbers_skipped: number;
+  total_rows_processed?: number;
+  leads_added?: number;
+  dnd_scrubbed_blocked?: number;
+  duplicates_skipped?: number;
+  invalid_numbers_skipped?: number;
+  [key: string]: unknown;
 }
 
-// ---------------------------------------------------------------------------
-// 5. WhatsApp Automation Types
-// ---------------------------------------------------------------------------
-
-export interface SendBrochureRequest {
-  customer_phone: string;
-  project_name?: string;
-  brochure_url?: string;
-  call_id?: number;
+// --------------------------------------------------------------- Leads ----
+export interface ApiLeadItem {
+  id: number;
+  name: string;
+  phone_number: string;
+  city: string | null;
+  campaign_name: string | null;
+  status: string;
+  lead_source: string;
+  sentiment: string;
+  outcome: string;
+  captured_info: Record<string, unknown>;
+  call_attempts: number;
+  call_sid: string | null;
+  last_contacted_at: string | null;
+  created_at: string;
 }
 
-export interface BookVisitRequest {
-  customer_phone: string;
-  project_name?: string;
-  visit_date: string;
-  time_slot?: string;
-  call_id?: number;
+export interface ApiLeadsList {
+  summary: { total_leads: number; qualified: number; pending_callback: number; hot_leads: number };
+  total: number;
+  leads: ApiLeadItem[];
 }
 
-export interface WhatsAppResponse {
-  success: boolean;
-  status: "sent" | "failed";
-  message_id?: string;
-  recipient: string;
-  error?: string;
+// ----------------------------------------------------------- Analytics ----
+export interface ApiPerformance {
+  summary: {
+    total_calls: number;
+    calls_change_pct: number;
+    connect_rate_pct: number;
+    connected_calls: number;
+    conversion_rate_pct: number;
+    qualified_leads: number;
+    avg_call_length_seconds: number;
+    total_duration_minutes: number;
+    success_rate_pct: number;
+    credits_used_inr: number;
+    last_hour_calls: number;
+    last_24h_calls: number;
+  };
+  calls_over_time: { date: string; dialed: number; connected: number; qualified: number }[];
+  conversion_funnel: { dialed: number; connected: number; engaged_gt_30s: number; qualified: number };
+  outcomes: {
+    interested: number;
+    callback: number;
+    not_interested: number;
+    busy: number;
+    dnd_scrubbed: number;
+    failed: number;
+  };
+}
+
+// ------------------------------------------------------------ Channels ----
+export interface ApiChannel {
+  id: number;
+  phone_number: string;
+  friendly_name: string;
+  concurrency_limit: number;
+  dlt_entity_id: string | null;
+  dlt_sender_id: string | null;
+  assigned_agent_id: number | null;
+  is_active: boolean;
+}
+
+export interface ApiChannelCreateRequest {
+  phone_number: string;
+  friendly_name?: string;
+  concurrency_limit?: number;
+  dlt_entity_id?: string;
+  dlt_sender_id?: string;
+  assigned_agent_id?: number;
+}
+
+export interface ApiLiveConcurrency {
+  active_calls_count: number;
+  burn_rate_inr_per_min: number;
+  total_channels: number;
+  channels_utilized_pct: number;
+  status_label: string;
+}
+
+// ------------------------------------------------------------- Billing ----
+export interface ApiWallet {
+  balance_inr: number;
+  currency: string;
+  estimated_minutes_remaining: number;
+  rate_per_minute: number;
+  is_low_balance: boolean;
+  workspace_name: string;
+}
+
+export interface ApiTransaction {
+  id: number;
+  workspace_id: number;
+  transaction_type: string;
+  amount_inr: number;
+  opening_balance_inr: number;
+  closing_balance_inr: number;
+  reference_id: string | null;
+  description: string;
+  created_at: string;
+}
+
+// ---------------------------------------------------------- Developers ----
+export interface ApiKeyItem {
+  id: number;
+  name: string;
+  key_prefix: string;
+  is_active: boolean;
+  created_at: string;
+  last_used_at: string | null;
+}
+
+export interface ApiKeyCreated {
+  id: number;
+  name: string;
+  key_prefix: string;
+  api_key: string; // full secret, returned exactly once
+  created_at: string;
+  message: string;
+}
+
+export interface ApiWebhook {
+  id: number;
+  workspace_id: number;
+  target_url: string;
+  description: string | null;
+  secret: string;
+  subscribed_events: string[];
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ApiWebhookCreateRequest {
+  target_url: string;
+  description?: string;
+  subscribed_events?: string[];
+}
+
+// ----------------------------------------------------------- Workspace ----
+export interface ApiWorkspaceProfile {
+  id: number;
+  name: string;
+  slug: string;
+  balance_inr: number;
+  is_active: boolean;
+  total_members: number;
+}
+
+export interface ApiMember {
+  id: number;
+  workspace_id: number;
+  full_name: string;
+  email: string;
+  role: string;
+  is_active: boolean;
+}
+
+export interface ApiMemberInviteRequest {
+  full_name: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
+// -------------------------------------------------------------- Search ----
+export interface ApiSearchResponse {
+  query: string;
+  total_results: number;
+  results: { category: string; id: number; title: string; subtitle: string | null; url: string }[];
+}
+
+/** FastAPI error body: `detail` is a string, or a list for 422 validation errors. */
+export interface ApiErrorBody {
+  detail?: string | { loc?: (string | number)[]; msg?: string; type?: string }[];
 }

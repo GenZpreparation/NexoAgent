@@ -18,10 +18,12 @@ NexoAgent/
 │   ├── .env.example          # Environment template
 │   └── README.md             # Backend detailed setup guide
 │
-├── 📁 frontend/               # Next.js 15 App Router & Obsidian Design System
-│   ├── docs/                 # Architecture, 4-Week Roadmap, API Contracts, Wireframes
-│   ├── src/                  # Next.js source code (Types, UI, Components)
-│   └── README.md             # Frontend architectural overview & guidelines
+├── 📁 frontend/               # Next.js 16 App Router web app (TypeScript, Tailwind)
+│   ├── src/                  # Pages, components, API service layer, demo data
+│   └── README.md             # Frontend setup, architecture & collaboration guide
+│
+├── 📁 docs/
+│   └── FRONTEND_BACKEND_CONTRACT.md  # Verified + proposed API contract between frontend and backend
 │
 ├── 📄 GEMINI.md              # Antigravity AI Absolute Operating Directive & Anti-AI-Slop Manifesto
 ├── 📄 DAILY_LOG.md           # Day-by-day development audit log
@@ -73,11 +75,14 @@ uvicorn app.main:app --reload --port 8000
 ```
 Swagger UI: `http://127.0.0.1:8000/docs`
 
-### 2. Frontend Setup (Next.js 15)
+### 2. Frontend Setup (Next.js 16)
 ```bash
 cd frontend
-# Refer to frontend/docs/ROADMAP_4_WEEKS.md for the step-by-step UI implementation
+npm install
+npm run dev            # http://localhost:3000 — runs on demo data by default
 ```
+To use the backend instead, set `NEXT_PUBLIC_DATA_MODE=api` in `frontend/.env.local` (see `frontend/.env.example`).
+Full guide: [`frontend/README.md`](frontend/README.md) · Integration contract: [`docs/FRONTEND_BACKEND_CONTRACT.md`](docs/FRONTEND_BACKEND_CONTRACT.md)
 
 ---
 

@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * NexoAgent design tokens (RGB triplets so Tailwind can apply alpha).
+ * Light is the default product theme; `.dark` on <html> swaps the palette.
+ */
+@layer base {
+  :root {
+    --canvas: 249 249 251;
+    --surface: 255 255 255;
+    --subtle: 246 246 248;
+    --muted: 240 240 243;
+    --line: 233 233 238;
+    --line-strong: 216 216 224;
+    --ink: 23 23 31;
+    --ink-2: 92 92 108;
+    --ink-3: 145 145 160;
+
+    --accent: 110 86 207;
+    --accent-hover: 94 71 190;
+    --accent-soft: 241 238 252;
+    --accent-ink: 88 65 181;
+
+    --success: 22 138 82;
+    --success-soft: 232 246 238;
+    --warning: 190 112 6;
+    --warning-soft: 253 244 225;
+    --danger: 207 52 52;
+    --danger-soft: 253 236 236;
+    --info: 37 99 205;
+    --info-soft: 233 241 253;
+    --hot: 226 88 22;
+    --hot-soft: 254 239 229;
+
+    /* Data-viz categorical slots (validated: dataviz validator, light surface) */
+    --series-1: #6e56cf;
+    --series-2: #00b894;
+    --series-3: #f47230;
+    --chart-grid: #ececf1;
+
+    color-scheme: light;
+  }
+
+  .dark {
+    --canvas: 14 14 19;
+    --surface: 22 22 29;
+    --subtle: 28 28 36;
+    --muted: 36 36 46;
+    --line: 42 42 54;
+    --line-strong: 58 58 72;
+    --ink: 236 236 242;
+    --ink-2: 168 168 184;
+    --ink-3: 116 116 132;
+
+    --accent: 146 125 240;
+    --accent-hover: 164 146 246;
+    --accent-soft: 39 34 64;
+    --accent-ink: 186 172 250;
+
+    --success: 64 192 128;
+    --success-soft: 20 46 34;
+    --warning: 230 164 60;
+    --warning-soft: 52 38 16;
+    --danger: 240 104 104;
+    --danger-soft: 58 24 26;
+    --info: 104 156 245;
+    --info-soft: 22 36 62;
+    --hot: 245 135 80;
+    --hot-soft: 58 32 18;
+
+    --series-1: #927df0;
+    --series-2: #00a888;
+    --series-3: #e76624;
+    --chart-grid: #2a2a36;
+
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-canvas text-ink antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  *:focus-visible {
+    outline: 2px solid rgb(var(--accent) / 0.6);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.18);
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-line bg-surface shadow-card;
+  }
+  .label {
+    @apply text-xs font-medium text-ink-2;
+  }
+  .section-label {
+    @apply px-3 pb-1 pt-4 text-2xs font-semibold uppercase tracking-[0.06em] text-ink-3;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
